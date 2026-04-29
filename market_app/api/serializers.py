@@ -67,3 +67,23 @@ class ProductSerializer(serializers.Serializer):
         market_id = validated_data.pop('market_id')
         product = Product.objects.create(**validated_data, seller_id=seller_id, market_id=market_id)
         return product
+    
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.price = validated_data.get('price', instance.price)
+        instance.description = validated_data.get('description', instance.description)
+        seller_id = validated_data.get('seller_id')
+        market_id = validated_data.get('market_id')
+        
+        if seller_id:
+            if not Seller.objects.filter(id=seller_id).exists():
+                raise serializers.ValidationError("Der Verkäufer existiert nicht.")
+            instance.seller_id = seller_id
+        
+        if market_id:
+            if not Market.objects.filter(id=market_id).exists():
+                raise serializers.ValidationError("Der Markt existiert nicht.")
+            instance.market_id = market_id
+        
+        instance.save()
+        return instance

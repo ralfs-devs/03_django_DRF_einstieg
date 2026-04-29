@@ -51,6 +51,8 @@ def sellers_view(request):
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 
+#Anlegen neuer Produkte, Zuordnung zu Märkten und Verkäufern (POST)
+# Auflistung aller Produkte mit ihren Details(GET)
 @api_view(['GET', 'POST'])
 def products_view(request):
     if request.method == 'GET':
@@ -62,4 +64,26 @@ def products_view(request):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)    
+        return Response(serializer.errors, status=400)
+
+# Anzeigen von Produktdetails (GET) für einzelne Produkte
+# Änderung von Produktdetails (PUT)
+# Löschen von Produkten (DELETE)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def product_single_view(request, pk):
+    if request.method == 'GET':
+        product = Product.objects.get(pk=pk)
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+    elif request.method == 'PUT':
+        product = Product.objects.get(pk=pk)
+        serializer = ProductSerializer(product, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+    elif request.method == 'DELETE':
+        product = Product.objects.get(pk=pk)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(serializer.errors, status=400)
