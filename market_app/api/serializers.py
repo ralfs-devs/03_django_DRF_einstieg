@@ -1,49 +1,30 @@
 from rest_framework import serializers
 from market_app.models import Market, Seller, Product
 
-class MarketSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    name= serializers.CharField(max_length=255)
-    location = serializers.CharField(max_length=255)
-    description = serializers.CharField()
-    net_worth = serializers.DecimalField(max_digits=100, decimal_places=2)
-    
-    def create(self, validated_data):
-        return Market.objects.create(**validated_data)
-    
-    def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.location = validated_data.get('location', instance.location)
-        instance.description = validated_data.get('description', instance.description)
-        instance.net_worth = validated_data.get('net_worth', instance.net_worth)
-        instance.save()
-        return instance
-    
-class SellerDetailSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(max_length=255)
-    contact_info = serializers.CharField()
-    markets = MarketSerializer(read_only=True, many=True)
-    
-class SellerCreateSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(max_length=255)
-    contact_info = serializers.CharField()
-    markets = serializers.ListField(child=serializers.IntegerField(), write_only=True)
-    
-    def validate_markets(self, value):
-        markets = Market.objects.filter(id__in=value)
-        if len(markets) != len(value):
-            raise serializers.ValidationError("Einige Märkte existieren nicht.")
+
+class MarketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Market
+        fields = '__all__'
+    def validate_name(self, value):
+        errors = []
+        if 'X' in value:
+            errors.append("Der Name darf kein 'X' enthalten.")
+        if 'Y' in value:
+            errors.append("Der Name darf kein 'Y' enthalten.")
+        if errors:
+            raise serializers.ValidationError(errors)
+
         return value
     
-    def create(self, validated_data):
-        markets_ids = validated_data.pop('markets')
-        seller = Seller.objects.create(**validated_data)
-        markets = Market.objects.filter(id__in=markets_ids)
-        seller.markets.set(markets)
-        return seller
+class SellerSerializer(serializers.ModelSerializer):
+    markets = MarketSerializer(read_only=True, many=True)
+    markets_ids = serializers.PrimaryKeyRelatedField(queryset=Market.objects.all(), many=True, write_only=True, source='markets')
 
+    class Meta:
+        model = Seller
+        fields = '__all__'    
+        
 class ProductSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     name = serializers.CharField(max_length=255)

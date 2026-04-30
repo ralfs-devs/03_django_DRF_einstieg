@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import MarketSerializer, SellerDetailSerializer, SellerCreateSerializer, ProductSerializer
+from .serializers import MarketSerializer, SellerSerializer, ProductSerializer
 from market_app.models import Market, Seller, Product 
 
 
@@ -42,14 +42,32 @@ def market_single_view(request, pk):
 def sellers_view(request):
     if request.method == 'GET':
         sellers = Seller.objects.all()
-        serializer = SellerDetailSerializer(sellers, many=True)
+        serializer = SellerSerializer(sellers, many=True)
         return Response(serializer.data)
     if request.method == 'POST':
-        serializer = SellerCreateSerializer(data=request.data)
+        serializer = SellerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def seller_single_view(request, pk):    
+    if request.method == 'GET':
+        seller = Seller.objects.get(pk=pk)
+        serializer = SellerSerializer(seller)
+        return Response(serializer.data)
+    elif request.method == 'PUT':
+        seller = Seller.objects.get(pk=pk)
+        serializer = SellerSerializer(seller, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+    elif request.method == 'DELETE':
+        seller = Seller.objects.get(pk=pk)
+        seller.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response(serializer.errors, status=400)
 
 #Anlegen neuer Produkte, Zuordnung zu Märkten und Verkäufern (POST)
 # Auflistung aller Produkte mit ihren Details(GET)
