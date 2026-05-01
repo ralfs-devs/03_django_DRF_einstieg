@@ -1,8 +1,11 @@
-from rest_framework import serializers
+from rest_framework import request, serializers
 from market_app.models import Market, Seller, Product
 
 
-class MarketSerializer(serializers.ModelSerializer):
+class MarketSerializer(serializers.HyperlinkedModelSerializer):
+    
+    sellers = serializers.HyperlinkedRelatedField(many=True, read_only=True, view_name='seller_single')
+    
     class Meta:
         model = Market
         fields = '__all__'
@@ -20,10 +23,13 @@ class MarketSerializer(serializers.ModelSerializer):
 class SellerSerializer(serializers.ModelSerializer):
     markets = MarketSerializer(read_only=True, many=True)
     markets_ids = serializers.PrimaryKeyRelatedField(queryset=Market.objects.all(), many=True, write_only=True, source='markets')
-
+    market_count = serializers.SerializerMethodField()
     class Meta:
         model = Seller
-        fields = '__all__'    
+        fields = ['id', 'name','contact_info','market_count', 'markets_ids', 'markets']
+        
+    def get_market_count(self, obj):
+        return obj.markets.count()   
         
 class ProductSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)

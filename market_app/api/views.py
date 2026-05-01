@@ -2,14 +2,16 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import MarketSerializer, SellerSerializer, ProductSerializer
-from market_app.models import Market, Seller, Product 
+from market_app.models import Market, Seller, Product
+
 
 
 @api_view(['GET', 'POST'])
 def markets_view(request):
     if request.method == 'GET':
         markets = Market.objects.all()
-        serializer = MarketSerializer(markets, many=True)
+        serializer = MarketSerializer(markets, many=True, context={'request': request})
+        
         return Response(serializer.data)
     if request.method == 'POST':
         serializer = MarketSerializer(data=request.data)
@@ -17,13 +19,12 @@ def markets_view(request):
             serializer.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
-    
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def market_single_view(request, pk):
     if request.method == 'GET':
         market = Market.objects.get(pk=pk)
-        serializer = MarketSerializer(market)
+        serializer = MarketSerializer(market, context={'request': request})
         return Response(serializer.data)
     elif request.method == 'PUT':
         market = Market.objects.get(pk=pk)
@@ -42,7 +43,7 @@ def market_single_view(request, pk):
 def sellers_view(request):
     if request.method == 'GET':
         sellers = Seller.objects.all()
-        serializer = SellerSerializer(sellers, many=True)
+        serializer = SellerSerializer(sellers, many=True, context={'request': request})
         return Response(serializer.data)
     if request.method == 'POST':
         serializer = SellerSerializer(data=request.data)
@@ -55,7 +56,7 @@ def sellers_view(request):
 def seller_single_view(request, pk):    
     if request.method == 'GET':
         seller = Seller.objects.get(pk=pk)
-        serializer = SellerSerializer(seller)
+        serializer = SellerSerializer(seller, context={'request': request})
         return Response(serializer.data)
     elif request.method == 'PUT':
         seller = Seller.objects.get(pk=pk)
