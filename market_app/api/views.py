@@ -81,7 +81,8 @@ def seller_single_view(request, pk):
 def products_view(request):
     if request.method == 'GET':
         products = Product.objects.all()
-        serializer = ProductSerializer(products, many=True)
+        serializer = ProducthyperlinkedSerializer(
+            products, many=True, context={'request': request})
         return Response(serializer.data)
     if request.method == 'POST':
         serializer = ProductSerializer(data=request.data)
@@ -99,7 +100,7 @@ def products_view(request):
 def product_single_view(request, pk):
     if request.method == 'GET':
         product = Product.objects.get(pk=pk)
-        serializer = ProducthyperlinkedSerializer(product)
+        serializer = ProductSerializer(product)
         return Response(serializer.data)
     elif request.method == 'PUT':
         product = Product.objects.get(pk=pk)
