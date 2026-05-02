@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import market_single_view, markets_view, sellers_view, products_view,product_single_view, seller_single_view
+from .views import market_single_view, markets_view, sellers_view, products_view, product_single_view, seller_single_view
 
 urlpatterns = [
     path('market/', markets_view),
@@ -8,4 +8,4 @@ urlpatterns = [
     path('seller/<int:pk>/', seller_single_view, name='seller_single'),
     path('product/', products_view),
     path('product/<int:pk>/', product_single_view, name='product_single'),
-    ]
+]
