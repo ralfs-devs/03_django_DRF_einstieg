@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from .serializers import MarketSerializer, ProducthyperlinkedSerializer, SellerSerializer, ProductSerializer, MarketHyperlinkedSerializer
 from market_app.models import Market, Seller, Product
+from django.shortcuts import get_object_or_404
 
 
 @api_view(['GET', 'POST'])
@@ -23,19 +24,17 @@ def markets_view(request):
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def market_single_view(request, pk):
+    market = get_object_or_404(Market, pk=pk)
     if request.method == 'GET':
-        market = Market.objects.get(pk=pk)
-        serializer = MarketHyperlinkedSerializer(
-            market, context={'request': request})
+        serializer = MarketSerializer(
+            market)
         return Response(serializer.data)
     elif request.method == 'PUT':
-        market = Market.objects.get(pk=pk)
         serializer = MarketSerializer(market, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
     elif request.method == 'DELETE':
-        market = Market.objects.get(pk=pk)
         market.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     return Response(serializer.errors, status=400)
