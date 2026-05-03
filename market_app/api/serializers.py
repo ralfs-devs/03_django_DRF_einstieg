@@ -64,9 +64,6 @@ class SellerSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
 
-    sellers = serializers.HyperlinkedRelatedField(
-        many=True, view_name='seller-detail', queryset=Seller.objects.all())
-
     class Meta:
         model = Product
         fields = '__all__'
