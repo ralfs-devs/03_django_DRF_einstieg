@@ -1,80 +1,84 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import generics, mixins, status
 from .serializers import MarketSerializer, ProducthyperlinkedSerializer, SellerSerializer, ProductSerializer, MarketHyperlinkedSerializer
 from market_app.models import Market, Seller, Product
 from django.shortcuts import get_object_or_404
+from rest_framework.views import APIView
 
 
-@api_view(['GET', 'POST'])
-def markets_view(request):
-    if request.method == 'GET':
-        markets = Market.objects.all()
-        serializer = MarketHyperlinkedSerializer(
-            markets, many=True, context={'request': request}, fields=['id', 'name', 'location', 'description', 'sellers', 'net_worth'])
-        return Response(serializer.data)
+class MarketView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    """
+    List all markets, or create a new market.
+    """
+    queryset = Market.objects.all()
+    serializer_class = MarketSerializer
 
-    if request.method == 'POST':
-        serializer = MarketSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
 
-@api_view(['GET', 'PUT', 'DELETE'])
-def market_single_view(request, pk):
-    market = get_object_or_404(Market, pk=pk)
-    if request.method == 'GET':
-        serializer = MarketSerializer(
-            market)
-        return Response(serializer.data)
-    elif request.method == 'PUT':
-        serializer = MarketSerializer(market, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-    elif request.method == 'DELETE':
-        market.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    return Response(serializer.errors, status=400)
+class MarketDetailView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, mixins.DestroyModelMixin, generics.GenericAPIView):
+    """
+    Retrieve, update or delete a market instance.
+    """
+    queryset = Market.objects.all()
+    serializer_class = MarketSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
 
-@api_view(['GET', 'POST'])
-def sellers_view(request):
-    if request.method == 'GET':
-        sellers = Seller.objects.all()
+class SellerView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
+    """
+    List all sellers, or create a new seller.
+    """
+    queryset = Seller.objects.all()
+    serializer_class = SellerSerializer
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
+
+
+class SellerDetailView(APIView):
+    """
+    Retrieve, update or delete a seller instance.
+    """
+
+    def get_object(self, pk):
+        return get_object_or_404(Seller, pk=pk)
+
+    def get(self, request, pk):
+        sellers = Seller.objects.filter(pk=pk)
         serializer = SellerSerializer(
             sellers, many=True, context={'request': request})
         return Response(serializer.data)
-    if request.method == 'POST':
-        serializer = SellerSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
 
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def seller_single_view(request, pk):
-    if request.method == 'GET':
-        seller = Seller.objects.get(pk=pk)
-        serializer = SellerSerializer(seller, context={'request': request})
-        return Response(serializer.data)
-    elif request.method == 'PUT':
-        seller = Seller.objects.get(pk=pk)
-        serializer = SellerSerializer(seller, data=request.data, partial=True)
+    def put(self, request, pk):
+        seller = self.get_object(pk)
+        serializer = SellerSerializer(
+            seller, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-    elif request.method == 'DELETE':
-        seller = Seller.objects.get(pk=pk)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        seller = self.get_object(pk)
         seller.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    return Response(serializer.errors, status=400)
-
-# Anlegen neuer Produkte, Zuordnung zu Märkten und Verkäufern (POST)
-# Auflistung aller Produkte mit ihren Details(GET)
 
 
 @api_view(['GET', 'POST'])
