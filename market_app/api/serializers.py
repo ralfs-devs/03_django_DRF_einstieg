@@ -1,17 +1,18 @@
-from rest_framework import request, serializers
+from rest_framework import serializers
 from market_app.models import Market, Seller, Product
 
 
 class MarketSerializer(serializers.ModelSerializer):
 
-    sellers = serializers.HyperlinkedRelatedField(
-        many=True, read_only=True, view_name='seller-detail')
+    sellers = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Seller.objects.all())
 
     class Meta:
         model = Market
         fields = '__all__'
 
     def validate_name(self, value):
+
         errors = []
         if 'X' in value:
             errors.append("Der Name darf kein 'X' enthalten.")
@@ -23,16 +24,17 @@ class MarketSerializer(serializers.ModelSerializer):
         return value
 
 
-class MarkethyperlinkedSerializer(MarketSerializer, serializers.HyperlinkedModelSerializer):
+class MarketHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
+    sellers = serializers.HyperlinkedRelatedField(
+        many=True,
+        read_only=True,
+        view_name='seller-detail'
+    )
+
     def __init__(self, *args, **kwargs):
-        # Don't pass the 'fields' arg up to the superclass
         fields = kwargs.pop('fields', None)
-
-        # Instantiate the superclass normally
         super().__init__(*args, **kwargs)
-
         if fields is not None:
-            # Drop any fields that are not specified in the `fields` argument.
             allowed = set(fields)
             existing = set(self.fields)
             for field_name in existing - allowed:
@@ -40,8 +42,8 @@ class MarkethyperlinkedSerializer(MarketSerializer, serializers.HyperlinkedModel
 
     class Meta:
         model = Market
-        fields = ['id', 'name', 'location',
-                  'description', 'sellers', 'url', 'net_worth']
+        fields = ['url', 'id', 'name', 'location',
+                  'description', 'sellers', 'net_worth']
 
 
 class SellerSerializer(serializers.ModelSerializer):
@@ -62,8 +64,8 @@ class SellerSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
 
-    sellers = serializers.HyperlinkedRelatedField(many=True,
-                                                  read_only=True, view_name='seller-detail')
+    sellers = serializers.HyperlinkedRelatedField(
+        many=True, view_name='seller-detail', queryset=Seller.objects.all())
 
     class Meta:
         model = Product
@@ -71,6 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProducthyperlinkedSerializer(ProductSerializer, serializers.HyperlinkedModelSerializer):
+
     def __init__(self, *args, **kwargs):
         # Don't pass the 'fields' arg up to the superclass
         fields = kwargs.pop('fields', None)
