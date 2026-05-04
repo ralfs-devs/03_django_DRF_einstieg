@@ -24,28 +24,6 @@ class MarketSerializer(serializers.ModelSerializer):
         return value
 
 
-class MarketHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
-    sellers = serializers.HyperlinkedRelatedField(
-        many=True,
-        read_only=True,
-        view_name='seller-detail'
-    )
-
-    def __init__(self, *args, **kwargs):
-        fields = kwargs.pop('fields', None)
-        super().__init__(*args, **kwargs)
-        if fields is not None:
-            allowed = set(fields)
-            existing = set(self.fields)
-            for field_name in existing - allowed:
-                self.fields.pop(field_name)
-
-    class Meta:
-        model = Market
-        fields = ['url', 'id', 'name', 'location',
-                  'description', 'sellers', 'net_worth']
-
-
 class SellerSerializer(serializers.ModelSerializer):
 
     markets = MarketSerializer(read_only=True, many=True)
@@ -63,27 +41,6 @@ class SellerSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Product
-        fields = '__all__'
-
-
-class ProducthyperlinkedSerializer(ProductSerializer, serializers.HyperlinkedModelSerializer):
-
-    def __init__(self, *args, **kwargs):
-        # Don't pass the 'fields' arg up to the superclass
-        fields = kwargs.pop('fields', None)
-
-        # Instantiate the superclass normally
-        super().__init__(*args, **kwargs)
-
-        if fields is not None:
-            # Drop any fields that are not specified in the `fields` argument.
-            allowed = set(fields)
-            existing = set(self.fields)
-            for field_name in existing - allowed:
-                self.fields.pop(field_name)
 
     class Meta:
         model = Product
